@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GuideWay Interactive Prototype</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">DECO / Interactive Prototype</p>
+        <h1>GuideWay</h1>
+        <p class="subtitle">
+          A clickable web prototype for visually impaired pedestrian navigation with camera preview,
+          obstacle alerts, voice guidance, and vibration feedback simulation.
+        </p>
+      </div>
+      <div class="header-note">
+        <strong>Best testing setup:</strong><br />
+        Open on a phone browser with camera permission enabled. HTTPS is recommended for live camera access.
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel info-panel">
+        <div class="card">
+          <h2>Prototype Features</h2>
+          <ul class="clean-list">
+            <li>Clickable page transitions</li>
+            <li>Device connection screen</li>
+            <li>Phone rear camera preview on Navigation page</li>
+            <li>Scanning animation overlay</li>
+            <li>Obstacle alert screen</li>
+            <li>Voice prompt using browser speech synthesis</li>
+            <li>Vibration API or visual buzz fallback</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Interaction Flow</h2>
+          <ol class="step-list">
+            <li>Starting Situation</li>
+            <li>System Activation</li>
+            <li>Environment Detection</li>
+            <li>Feedback Triggered</li>
+            <li>User Reaction</li>
+            <li>Safe Continuation</li>
+          </ol>
+        </div>
+
+        <div class="card compact">
+          <h2>Testing Notes</h2>
+          <p>
+            On some laptops or sandbox previews, camera and vibration support may be limited. The prototype includes visual fallback effects so the warning state is still visible during demos.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel prototype-panel">
+        <div class="prototype-header">
+          <div>
+            <p class="eyebrow small">Live demo</p>
+            <h2>Mobile App Prototype</h2>
+          </div>
+          <div class="status-pill" id="screenLabel">HOME</div>
+        </div>
+
+        <div class="phone-shell" id="phoneShell">
+          <div class="phone-top"></div>
+          <div class="phone-screen" id="phoneScreen"></div>
+        </div>
+      </section>
+    </main>
+
+    <section class="references-grid">
+      <article class="panel reference-panel">
+        <div class="reference-header">
+          <div>
+            <p class="eyebrow small">Storyboard</p>
+            <h2>6-Panel User Journey</h2>
+          </div>
+        </div>
+        <img class="reference-image" src="storyboard.jpg" alt="GuideWay storyboard" />
+        <div class="storyboard-grid">
+          <div class="story-card"><span>01</span><strong>Starting Situation</strong><p>User walks on campus and is unaware of obstacles.</p></div>
+          <div class="story-card"><span>02</span><strong>System Activation</strong><p>User taps Start Navigation in the app.</p></div>
+          <div class="story-card"><span>03</span><strong>Environment Detection</strong><p>The system scans and identifies an obstacle.</p></div>
+          <div class="story-card"><span>04</span><strong>Feedback Triggered</strong><p>Voice and vibration warn the user to turn left.</p></div>
+          <div class="story-card"><span>05</span><strong>User Reaction</strong><p>The user turns left to avoid the obstacle.</p></div>
+          <div class="story-card"><span>06</span><strong>Safe Continuation</strong><p>The user continues safely along the path.</p></div>
+        </div>
+      </article>
+
+      <article class="panel reference-panel">
+        <div class="reference-header">
+          <div>
+            <p class="eyebrow small">Figma reference</p>
+            <h2>Core Page Direction</h2>
+          </div>
+        </div>
+        <img class="reference-image" src="figma-reference.png" alt="GuideWay Figma reference screens" />
+        <div class="figma-note">
+          This final HTML/CSS/JS prototype follows the same four-page logic: <strong>Home</strong>, <strong>Connect Devices</strong>, <strong>Navigation</strong>, and <strong>Alert</strong>.
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
