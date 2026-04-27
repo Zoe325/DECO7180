@@ -2,47 +2,32 @@ const ALERT_PROFILES = {
   near: {
     key: "near",
     distance: "0.8m",
-    distanceValue: 0.8,
+    meters: 0.8,
     level: "High",
-    severityTitle: "HIGH SEVERITY",
-    title: "STOP immediately",
-    guidance: "Obstacle very close. Stop and prepare to change direction.",
-    spoken: "Stop. Obstacle 0.8 meters ahead. Immediate obstacle. Stop.",
-    voiceSummary: '"Stop. Obstacle very close."',
-    vibrationSummary: "Strong vibration",
-    voiceStatus: "Voice alert sent",
-    vibrationPattern: [380, 120, 380, 120, 520],
-    accent: "#ef4444",
+    title: "Immediate obstacle – STOP",
+    guidance: "Stop and prepare to change direction.",
+    spoken: "Obstacle 0.8 meters ahead. Immediate obstacle. Stop.",
+    vibrationPattern: [320, 120, 320, 120, 420],
   },
   medium: {
     key: "medium",
     distance: "1.5m",
-    distanceValue: 1.5,
+    meters: 1.5,
     level: "Medium",
-    severityTitle: "MEDIUM SEVERITY",
     title: "Slow down",
     guidance: "Obstacle ahead. Reduce speed and stay alert.",
-    spoken: "Slow down. Obstacle 1.5 meters ahead.",
-    voiceSummary: '"Slow down. Obstacle ahead."',
-    vibrationSummary: "Medium vibration",
-    voiceStatus: "Voice alert sent",
+    spoken: "Obstacle 1.5 meters ahead. Slow down.",
     vibrationPattern: [220, 120, 220, 120, 280],
-    accent: "#f59e0b",
   },
   far: {
     key: "far",
     distance: "2.5m",
-    distanceValue: 2.5,
+    meters: 2.5,
     level: "Low",
-    severityTitle: "LOW SEVERITY",
     title: "Adjust direction",
     guidance: "Obstacle ahead. Turn slightly left.",
-    spoken: "Adjust direction. Obstacle 2.5 meters ahead.",
-    voiceSummary: '"Adjust direction. Path clear."',
-    vibrationSummary: "Light vibration",
-    voiceStatus: "Voice alert sent",
-    vibrationPattern: [120, 120, 120],
-    accent: "#67b44a",
+    spoken: "Obstacle 2.5 meters ahead. Adjust direction.",
+    vibrationPattern: [120, 100, 120],
   },
 };
 
@@ -61,16 +46,12 @@ const state = {
   cameraError: "",
   stream: null,
   voicePlaying: false,
-  voiceSupported:
-    typeof window !== "undefined" && "speechSynthesis" in window,
+  voiceSupported: typeof window !== "undefined" && "speechSynthesis" in window,
+  vibrationSupported: typeof navigator !== "undefined" && typeof navigator.vibrate === "function",
   alertProfile: "medium",
-  detectedDistance: null,
   detectedProfile: null,
-  detectionNote:
-    "Use the demo buttons below to simulate camera-based distance recognition.",
-  detectionCooldownMs: 2500,
-  lastAutoAlertAt: 0,
-  previewMode: false,
+  detectedDistance: null,
+  detectionNote: "Use the camera and demo buttons below to simulate distance recognition.",
   lastAlert: {
     voice: "off",
     vibration: "off",
@@ -82,7 +63,6 @@ const phoneShell = document.getElementById("phoneShell");
 const screenLabel = document.getElementById("screenLabel");
 
 function updateScreenLabel() {
-  if (!screenLabel) return;
   screenLabel.textContent = state.screen.toUpperCase();
 }
 
@@ -95,7 +75,7 @@ function setScreen(next) {
     state.scanning = false;
   }
 
-  if (next === "navigation" && !state.previewMode) {
+  if (next === "navigation") {
     startCamera();
   }
 
@@ -134,19 +114,8 @@ function recognizeDistance(distanceMeters) {
   }
 
   state.detectedProfile = profile.key;
-  state.detectionNote = `${profile.severityTitle} detected from camera distance recognition. Voice guidance and graded vibration will follow this severity.`;
-
-  const now = Date.now();
-  const severityChanged = state.alertProfile !== profile.key;
-  const cooledDown = now - state.lastAutoAlertAt > state.detectionCooldownMs;
-
-  if (severityChanged || cooledDown) {
-    state.lastAutoAlertAt = now;
-    triggerAlert(profile.key);
-    return;
-  }
-
-  render();
+  state.detectionNote = `${profile.level} risk detected from simulated distance recognition.`;
+  triggerAlert(profile.key);
 }
 
 function render() {
@@ -164,12 +133,8 @@ function render() {
       </section>
     `;
 
-    document
-      .getElementById("goNavigation")
-      .addEventListener("click", () => setScreen("navigation"));
-    document
-      .getElementById("goDevices")
-      .addEventListener("click", () => setScreen("devices"));
+    document.getElementById("goNavigation").addEventListener("click", () => setScreen("navigation"));
+    document.getElementById("goDevices").addEventListener("click", () => setScreen("devices"));
     return;
   }
 
@@ -198,12 +163,8 @@ function render() {
       </section>
     `;
 
-    document
-      .getElementById("backHome")
-      .addEventListener("click", () => setScreen("home"));
-    document
-      .getElementById("continueNav")
-      .addEventListener("click", () => setScreen("navigation"));
+    document.getElementById("backHome").addEventListener("click", () => setScreen("home"));
+    document.getElementById("continueNav").addEventListener("click", () => setScreen("navigation"));
     bindDeviceToggles();
     return;
   }
@@ -230,111 +191,76 @@ function render() {
               <div class="corner bl"></div>
               <div class="corner br"></div>
             </div>
-            ${
-              state.scanning && state.cameraStatus === "ready"
-                ? '<div class="scan-line"></div>'
-                : ""
-            }
+            ${state.scanning && state.cameraStatus === "ready" ? '<div class="scan-line"></div>' : ''}
             ${cameraOverlayTemplate()}
           </div>
         </div>
 
         <div class="camera-meta">
           Camera status: <strong>${state.cameraStatus}</strong><br/>
-          ${
-            state.cameraError
-              ? `<span style="color:#b85e19;">${escapeHtml(
-                  state.cameraError
-                )}</span>`
-              : "Allow rear camera access on your phone for a more realistic demo."
-          }
+          ${state.cameraError
+            ? `<span style="color:#b85e19;">${escapeHtml(state.cameraError)}</span>`
+            : 'Allow rear camera access on your phone for a more realistic demo.'}
         </div>
 
-        <div class="recognition-card ${detected ? `severity-${detected.key}` : ""}">
+        <div class="recognition-card ${detected ? `severity-${detected.key}` : ''}">
           <div class="recognition-head">
             <strong>Distance recognition</strong>
-            <span class="recognition-badge ${detected ? `severity-${detected.key}` : ""}">
-              ${detected ? detected.severityTitle : "IDLE"}
-            </span>
+            <span class="recognition-badge ${detected ? `severity-${detected.key}` : ''}">${detected ? `${detected.level} risk` : 'IDLE'}</span>
           </div>
-
           <div class="recognition-grid">
             <div class="recognition-metric">
               <span>Distance</span>
-              <strong>${state.detectedDistance !== null ? `${state.detectedDistance.toFixed(1)}m` : "--"}</strong>
+              <strong>${state.detectedDistance !== null ? `${state.detectedDistance.toFixed(1)}m` : '--'}</strong>
             </div>
             <div class="recognition-metric">
               <span>Danger level</span>
-              <strong>${detected ? detected.level : "--"}</strong>
+              <strong>${detected ? detected.level : '--'}</strong>
             </div>
           </div>
-
-          <p class="recognition-note">${escapeHtml(state.detectionNote)}</p>
+          <p class="recognition-note">${state.detectionNote}</p>
         </div>
 
         <div class="toggle-area">
           <div class="toggle-row">
             <span>Voice alerts</span>
-            <button class="toggle ${
-              state.voiceEnabled ? "active" : ""
-            }" id="toggleVoice" aria-label="Toggle voice alerts"></button>
+            <button class="toggle ${state.voiceEnabled ? 'active' : ''}" id="toggleVoice" aria-label="Toggle voice alerts"></button>
           </div>
           <div class="toggle-row">
             <span>Vibration alerts</span>
-            <button class="toggle ${
-              state.vibrationEnabled ? "active" : ""
-            }" id="toggleVibration" aria-label="Toggle vibration alerts"></button>
+            <button class="toggle ${state.vibrationEnabled ? 'active' : ''}" id="toggleVibration" aria-label="Toggle vibration alerts"></button>
           </div>
         </div>
 
         <div class="control-grid">
           <button class="soft-btn" id="openCamera">Open Rear Camera</button>
-          <button class="small-btn" id="scanBtn">${
-            state.scanning ? "Stop Scanning" : "Start Scanning"
-          }</button>
-
+          <button class="small-btn" id="scanBtn">${state.scanning ? 'Stop Scanning' : 'Start Scanning'}</button>
           <div class="demo-group">
-            <button class="small-btn severity-btn near" id="detectNear">Recognize 0.8m</button>
-            <button class="small-btn severity-btn medium" id="detectMedium">Recognize 1.5m</button>
-            <button class="small-btn severity-btn far" id="detectFar">Recognize 2.5m</button>
+            <button class="small-btn secondary severity-btn near" id="simulateNear">Recognize 0.8m</button>
+            <button class="small-btn secondary severity-btn medium" id="simulateMedium">Recognize 1.5m</button>
+            <button class="small-btn secondary severity-btn far" id="simulateFar">Recognize 2.5m</button>
           </div>
         </div>
       </section>
     `;
 
-    document
-      .getElementById("backHome")
-      .addEventListener("click", () => setScreen("home"));
-
+    document.getElementById("backHome").addEventListener("click", () => setScreen("home"));
     document.getElementById("toggleVoice").addEventListener("click", () => {
       state.voiceEnabled = !state.voiceEnabled;
       render();
     });
-
-    document
-      .getElementById("toggleVibration")
-      .addEventListener("click", () => {
-        state.vibrationEnabled = !state.vibrationEnabled;
-        render();
-      });
-
+    document.getElementById("toggleVibration").addEventListener("click", () => {
+      state.vibrationEnabled = !state.vibrationEnabled;
+      render();
+    });
     document.getElementById("openCamera").addEventListener("click", startCamera);
-
     document.getElementById("scanBtn").addEventListener("click", () => {
       state.scanning = !state.scanning;
       render();
     });
-
-    document
-      .getElementById("detectNear")
-      .addEventListener("click", () => recognizeDistance(0.8));
-    document
-      .getElementById("detectMedium")
-      .addEventListener("click", () => recognizeDistance(1.5));
-    document
-      .getElementById("detectFar")
-      .addEventListener("click", () => recognizeDistance(2.5));
-
+    document.getElementById("simulateNear").addEventListener("click", () => recognizeDistance(0.8));
+    document.getElementById("simulateMedium").addEventListener("click", () => recognizeDistance(1.5));
+    document.getElementById("simulateFar").addEventListener("click", () => recognizeDistance(2.5));
     attachStreamToVideo();
     return;
   }
@@ -344,103 +270,64 @@ function render() {
 
     phoneScreen.innerHTML = `
       <section class="screen alert-screen severity-${alertData.key}">
-        <div class="row-header alert-topbar">
+        <div class="row-header" style="width:100%; justify-content:flex-start;">
           <button class="icon-btn" id="backNavigation">←</button>
-          <div class="alert-page-title">Alert</div>
-          <div class="alert-top-spacer"></div>
+        </div>
+        <div class="alert-title">Alert</div>
+        <div class="alert-icon"></div>
+        <div class="alert-distance-line">Obstacle ${alertData.distance} ahead</div>
+        <div class="alert-main">${alertData.title}</div>
+        <div class="alert-sub">${alertData.guidance}</div>
+
+        <div class="alert-metrics">
+          <div class="metric-card">
+            <span>Distance</span>
+            <strong>${alertData.distance}</strong>
+          </div>
+          <div class="metric-card">
+            <span>Danger level</span>
+            <strong>${alertData.level}</strong>
+          </div>
         </div>
 
-        <div class="severity-heading severity-${alertData.key}">${alertData.severityTitle} <span>(${alertData.distance})</span></div>
-
-        <div class="alert-hero severity-${alertData.key}">
-          <div class="alert-icon-ring outer"></div>
-          <div class="alert-icon-ring inner"></div>
-          <div class="alert-icon-circle severity-${alertData.key}">
-            <div class="alert-icon-triangle"></div>
+        ${(state.lastAlert.voice === 'sent' || state.lastAlert.vibration === 'sent' || state.lastAlert.vibration === 'visual') ? `
+          <div class="feedback-pulse">
+            <span class="pulse-dot"></span>
+            Warning feedback active
           </div>
+        ` : ''}
 
-          <div class="alert-distance-line">Obstacle ${alertData.distance} ahead</div>
-          <div class="alert-main">${alertData.title}</div>
-          <div class="alert-sub">${alertData.guidance}</div>
-        </div>
-
-        <div class="feedback-stack">
-          <div class="feedback-card severity-${alertData.key}">
-            <div class="feedback-icon-circle severity-${alertData.key}">
-              <div class="feedback-speaker severity-${alertData.key}"></div>
-            </div>
-            <div class="feedback-copy">
-              <strong>${alertData.voiceStatus}</strong>
-              <span>${
-                state.lastAlert.voice === "issue"
-                  ? "Speech synthesis is unsupported in this browser preview."
-                  : state.lastAlert.voice === "off"
-                  ? "Voice alert is currently turned off."
-                  : alertData.voiceSummary
-              }</span>
-            </div>
-            <div class="status-badge ${
-              state.lastAlert.voice === "sent"
-                ? "sent"
-                : state.lastAlert.voice === "issue"
-                ? "issue"
-                : "off"
-            }">${
-              state.lastAlert.voice === "sent"
-                ? "Sent"
-                : state.lastAlert.voice === "issue"
-                ? "Issue"
-                : "Off"
-            }</div>
-          </div>
-
-          <div class="feedback-card severity-${alertData.key}">
-            <div class="feedback-icon-circle severity-${alertData.key}">
-              <div class="feedback-watch severity-${alertData.key}"></div>
-            </div>
-            <div class="feedback-copy">
-              <strong>Vibration alert sent</strong>
-              <span>${
-                state.lastAlert.vibration === "off"
-                  ? "Vibration alert is currently turned off."
-                  : state.lastAlert.vibration === "visual"
-                  ? `${alertData.vibrationSummary}. Visual buzz fallback is shown.`
-                  : alertData.vibrationSummary
-              }</span>
-            </div>
-            <div class="status-badge ${
-              state.lastAlert.vibration === "sent"
-                ? "sent"
-                : state.lastAlert.vibration === "visual"
-                ? "visual"
-                : "off"
-            }">${
-              state.lastAlert.vibration === "sent"
-                ? "Sent"
-                : state.lastAlert.vibration === "visual"
-                ? "Visual"
-                : "Off"
-            }</div>
-          </div>
+        <div class="alert-status">
+          ${statusRow(
+            "Voice alert",
+            state.lastAlert.voice === "sent"
+              ? `Speech prompt played: “${alertData.spoken}”`
+              : state.lastAlert.voice === "issue"
+              ? "Speech synthesis is unsupported in this browser preview."
+              : "Voice alert is currently turned off.",
+            state.lastAlert.voice
+          )}
+          ${statusRow(
+            "Vibration alert",
+            state.lastAlert.vibration === "sent"
+              ? "Native vibration request was sent to the device."
+              : state.lastAlert.vibration === "visual"
+              ? "Visual buzz fallback is shown because physical vibration is unavailable here."
+              : "Vibration alert is currently turned off.",
+            state.lastAlert.vibration
+          )}
         </div>
 
         <div class="alert-actions">
-          <button class="small-btn severity-confirm ${alertData.key}" id="ackAlert">OK, understood</button>
-          <div class="secondary-actions">
-            <button class="small-btn ghost" id="replayVoice">Replay voice</button>
-            <button class="small-btn secondary" id="replayBuzz">Replay vibration</button>
-          </div>
+          <button class="small-btn" id="replayVoice">Replay voice prompt</button>
+          <button class="small-btn ghost" id="replayBuzz">Replay vibration / buzz</button>
+          <button class="small-btn secondary" id="returnNavigation">Back to navigation</button>
         </div>
       </section>
     `;
 
-    document
-      .getElementById("backNavigation")
-      .addEventListener("click", () => setScreen("navigation"));
-    document
-      .getElementById("ackAlert")
-      .addEventListener("click", () => setScreen("navigation"));
-
+    document.getElementById("backNavigation").addEventListener("click", () => setScreen("navigation"));
+    document.getElementById("returnNavigation").addEventListener("click", () => setScreen("navigation"));
     document.getElementById("replayVoice").addEventListener("click", () => {
       if (!state.voiceEnabled) {
         state.lastAlert.voice = "off";
@@ -449,7 +336,6 @@ function render() {
       }
       playVoicePrompt();
     });
-
     document.getElementById("replayBuzz").addEventListener("click", () => {
       if (!state.vibrationEnabled) {
         state.lastAlert.vibration = "off";
@@ -458,7 +344,6 @@ function render() {
       }
       playVibrationFeedback();
     });
-
     return;
   }
 }
@@ -470,9 +355,7 @@ function deviceRow(key, icon, label) {
         <div class="device-icon">${icon}</div>
         <div>${label}</div>
       </div>
-      <button class="tag ${
-        state.devices[key] ? "on" : "off"
-      }" data-device="${key}">${state.devices[key] ? "Connected" : "Off"}</button>
+      <button class="tag ${state.devices[key] ? 'on' : 'off'}" data-device="${key}">${state.devices[key] ? 'Connected' : 'Off'}</button>
     </div>
   `;
 }
@@ -490,12 +373,8 @@ function bindDeviceToggles() {
 function cameraOverlayTemplate() {
   if (state.cameraStatus === "ready") return "";
 
-  const title =
-    state.cameraStatus === "loading" ? "Opening camera..." : "Rear camera preview";
-
-  const message =
-    state.cameraError ||
-    "Allow camera permission on your phone to show the live navigation view.";
+  const title = state.cameraStatus === "loading" ? "Opening camera..." : "Rear camera preview";
+  const message = state.cameraError || "Allow camera permission on your phone to show the live navigation view.";
 
   return `
     <div class="camera-overlay-message">
@@ -514,12 +393,6 @@ function attachStreamToVideo() {
 }
 
 async function startCamera() {
-  if (state.previewMode) {
-    state.cameraStatus = "ready";
-    render();
-    return;
-  }
-
   if (state.stream) {
     state.cameraStatus = "ready";
     render();
@@ -555,8 +428,7 @@ async function startCamera() {
     attachStreamToVideo();
   } catch (error) {
     state.cameraStatus = "error";
-    state.cameraError =
-      "Camera permission was denied or this page is not running in a secure mobile browser context.";
+    state.cameraError = "Camera permission was denied or this page is not running in a secure mobile browser context.";
     render();
   }
 }
@@ -569,12 +441,10 @@ function stopCamera() {
   state.cameraStatus = "idle";
 }
 
-function triggerAlert(profile = "medium") {
-  state.alertProfile = profile;
+function triggerAlert(profileKey = "medium") {
+  state.alertProfile = profileKey;
   state.lastAlert.voice = state.voiceEnabled ? playVoicePrompt(false) : "off";
-  state.lastAlert.vibration = state.vibrationEnabled
-    ? playVibrationFeedback(false)
-    : "off";
+  state.lastAlert.vibration = state.vibrationEnabled ? playVibrationFeedback(false) : "off";
   state.scanning = false;
   state.screen = "alert";
   stopCamera();
@@ -588,10 +458,10 @@ function playVoicePrompt(shouldRender = true) {
     return "off";
   }
 
-  if (!state.voiceSupported || state.previewMode) {
-    state.lastAlert.voice = state.previewMode ? "sent" : "issue";
+  if (!state.voiceSupported) {
+    state.lastAlert.voice = "issue";
     if (shouldRender) render();
-    return state.lastAlert.voice;
+    return "issue";
   }
 
   try {
@@ -599,22 +469,18 @@ function playVoicePrompt(shouldRender = true) {
     const utterance = new SpeechSynthesisUtterance(alertData.spoken);
     utterance.rate = 1;
     utterance.pitch = 1;
-
     utterance.onstart = () => {
       state.voicePlaying = true;
       state.lastAlert.voice = "sent";
       if (state.screen === "alert") render();
     };
-
     utterance.onend = () => {
       state.voicePlaying = false;
       if (state.screen === "alert") render();
     };
-
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
     state.lastAlert.voice = "sent";
-
     if (shouldRender) render();
     return "sent";
   } catch (error) {
@@ -632,21 +498,20 @@ function playVibrationFeedback(shouldRender = true) {
   }
 
   addVisualBuzz();
-
   const alertData = getCurrentAlert();
 
-  if (state.previewMode) {
-    state.lastAlert.vibration = "sent";
-    if (shouldRender) render();
-    return "sent";
-  }
-
   if (navigator.vibrate) {
-    const result = navigator.vibrate(alertData.vibrationPattern);
-    const mode = result === false ? "visual" : "sent";
-    state.lastAlert.vibration = mode;
-    if (shouldRender) render();
-    return mode;
+    try {
+      const result = navigator.vibrate(alertData.vibrationPattern);
+      const mode = result === false ? "visual" : "sent";
+      state.lastAlert.vibration = mode;
+      if (shouldRender) render();
+      return mode;
+    } catch (error) {
+      state.lastAlert.vibration = "visual";
+      if (shouldRender) render();
+      return "visual";
+    }
   }
 
   state.lastAlert.vibration = "visual";
@@ -661,6 +526,24 @@ function addVisualBuzz() {
   setTimeout(() => phoneShell.classList.remove("visual-buzz"), 1000);
 }
 
+function statusRow(title, description, mode) {
+  const label =
+    mode === "sent" ? "Sent" :
+    mode === "visual" ? "Visual" :
+    mode === "issue" ? "Browser issue" :
+    "Off";
+
+  return `
+    <div class="status-row">
+      <div>
+        <strong>${title}</strong>
+        <span>${description}</span>
+      </div>
+      <div class="status-badge ${mode === 'sent' ? 'sent' : mode === 'visual' ? 'visual' : mode === 'issue' ? 'issue' : 'off'}">${label}</div>
+    </div>
+  `;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -670,64 +553,12 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-function applyPreviewFromHash() {
-  const hash = (window.location.hash || "").replace(/^#/, "");
-  state.previewMode = hash.startsWith("preview-");
-
-  if (!state.previewMode) return false;
-
-  stopCamera();
-  state.scanning = false;
-  state.voiceEnabled = true;
-  state.vibrationEnabled = true;
-  state.lastAlert.voice = "sent";
-  state.lastAlert.vibration = "sent";
-
-  if (hash === "preview-navigation") {
-    state.screen = "navigation";
-    state.cameraStatus = "ready";
-    state.detectedDistance = 1.5;
-    state.detectedProfile = "medium";
-    state.detectionNote =
-      "MEDIUM SEVERITY detected from camera distance recognition. Voice guidance and graded vibration will follow this severity.";
-    return true;
-  }
-
-  if (hash === "preview-alert-near") {
-    state.screen = "alert";
-    state.alertProfile = "near";
-    return true;
-  }
-
-  if (hash === "preview-alert-medium") {
-    state.screen = "alert";
-    state.alertProfile = "medium";
-    return true;
-  }
-
-  if (hash === "preview-alert-far") {
-    state.screen = "alert";
-    state.alertProfile = "far";
-    return true;
-  }
-
-  return false;
-}
-
 window.addEventListener("beforeunload", () => {
   stopCamera();
-  if (state.voiceSupported && !state.previewMode) {
+  if (state.voiceSupported) {
     window.speechSynthesis.cancel();
   }
 });
 
-window.addEventListener("hashchange", () => {
-  if (applyPreviewFromHash()) {
-    updateScreenLabel();
-    render();
-  }
-});
-
-applyPreviewFromHash();
 updateScreenLabel();
 render();
