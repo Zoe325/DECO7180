@@ -1,23 +1,19 @@
-GuideWay Interactive Prototype
+GuideWay Complete Frontend Replace
 
-Files:
+Replace your current project files with:
 - index.html
 - style.css
 - script.js
-- storyboard.jpg
-- figma-reference.png
 
-How to run:
-1. Keep all files in the same folder.
-2. Open index.html in a browser.
-3. For camera access, test on a phone browser when possible.
-4. Camera usually works best on HTTPS or localhost.
-5. If vibration is unsupported, the prototype uses a visual buzz effect.
+Recommended test flow:
+1. Open on mobile browser over HTTPS.
+2. Tap Start Navigation.
+3. Allow camera permission.
+4. Tap Open Rear Camera.
+5. Tap Start Scanning.
+6. Tap Recognize 0.8m / 1.5m / 2.5m.
 
-Recommended demo flow:
-- Home → Start Navigation
-- Allow camera permission
-- Click Start Scanning
-- Click Simulate “Obstacle Ahead”
-- Show Alert page with voice and vibration status
-- Replay voice prompt / Replay vibration
+Notes:
+- Voice uses browser speech synthesis.
+- Vibration first tries the browser vibration API.
+- If physical vibration is unavailable, the phone frame uses a visual buzz fallback.
