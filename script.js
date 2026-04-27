@@ -2,29 +2,47 @@ const ALERT_PROFILES = {
   near: {
     key: "near",
     distance: "0.8m",
+    distanceValue: 0.8,
     level: "High",
-    title: "Immediate obstacle – STOP",
-    guidance: "Stop and prepare to change direction",
-    spoken: "Obstacle 0.8 meters ahead. Immediate obstacle. Stop.",
-    vibrationPattern: [260, 100, 260, 100, 320],
+    severityTitle: "HIGH SEVERITY",
+    title: "STOP immediately",
+    guidance: "Obstacle very close. Stop and prepare to change direction.",
+    spoken: "Stop. Obstacle 0.8 meters ahead. Immediate obstacle. Stop.",
+    voiceSummary: '"Stop. Obstacle very close."',
+    vibrationSummary: "Strong vibration",
+    voiceStatus: "Voice alert sent",
+    vibrationPattern: [380, 120, 380, 120, 520],
+    accent: "#ef4444",
   },
   medium: {
     key: "medium",
     distance: "1.5m",
+    distanceValue: 1.5,
     level: "Medium",
+    severityTitle: "MEDIUM SEVERITY",
     title: "Slow down",
-    guidance: "Obstacle ahead. Reduce speed and stay alert",
-    spoken: "Obstacle 1.5 meters ahead. Slow down.",
-    vibrationPattern: [200, 100, 200, 100, 280],
+    guidance: "Obstacle ahead. Reduce speed and stay alert.",
+    spoken: "Slow down. Obstacle 1.5 meters ahead.",
+    voiceSummary: '"Slow down. Obstacle ahead."',
+    vibrationSummary: "Medium vibration",
+    voiceStatus: "Voice alert sent",
+    vibrationPattern: [220, 120, 220, 120, 280],
+    accent: "#f59e0b",
   },
   far: {
     key: "far",
     distance: "2.5m",
+    distanceValue: 2.5,
     level: "Low",
+    severityTitle: "LOW SEVERITY",
     title: "Adjust direction",
-    guidance: "Obstacle ahead. Turn slightly left",
-    spoken: "Obstacle 2.5 meters ahead. Adjust direction.",
+    guidance: "Obstacle ahead. Turn slightly left.",
+    spoken: "Adjust direction. Obstacle 2.5 meters ahead.",
+    voiceSummary: '"Adjust direction. Path clear."',
+    vibrationSummary: "Light vibration",
+    voiceStatus: "Voice alert sent",
     vibrationPattern: [120, 120, 120],
+    accent: "#67b44a",
   },
 };
 
@@ -46,6 +64,13 @@ const state = {
   voiceSupported:
     typeof window !== "undefined" && "speechSynthesis" in window,
   alertProfile: "medium",
+  detectedDistance: null,
+  detectedProfile: null,
+  detectionNote:
+    "Use the demo buttons below to simulate camera-based distance recognition.",
+  detectionCooldownMs: 2500,
+  lastAutoAlertAt: 0,
+  previewMode: false,
   lastAlert: {
     voice: "off",
     vibration: "off",
@@ -57,6 +82,7 @@ const phoneShell = document.getElementById("phoneShell");
 const screenLabel = document.getElementById("screenLabel");
 
 function updateScreenLabel() {
+  if (!screenLabel) return;
   screenLabel.textContent = state.screen.toUpperCase();
 }
 
@@ -69,7 +95,7 @@ function setScreen(next) {
     state.scanning = false;
   }
 
-  if (next === "navigation") {
+  if (next === "navigation" && !state.previewMode) {
     startCamera();
   }
 
@@ -83,6 +109,44 @@ function getDeviceCount() {
 
 function getCurrentAlert() {
   return ALERT_PROFILES[state.alertProfile] || ALERT_PROFILES.medium;
+}
+
+function getDetectedAlert() {
+  return state.detectedProfile ? ALERT_PROFILES[state.detectedProfile] : null;
+}
+
+function mapDistanceToProfile(distanceMeters) {
+  if (distanceMeters <= 1.0) return ALERT_PROFILES.near;
+  if (distanceMeters <= 2.0) return ALERT_PROFILES.medium;
+  if (distanceMeters <= 3.0) return ALERT_PROFILES.far;
+  return null;
+}
+
+function recognizeDistance(distanceMeters) {
+  const profile = mapDistanceToProfile(distanceMeters);
+  state.detectedDistance = distanceMeters;
+
+  if (!profile) {
+    state.detectedProfile = null;
+    state.detectionNote = `Detected distance: ${distanceMeters.toFixed(1)}m. No warning threshold reached.`;
+    render();
+    return;
+  }
+
+  state.detectedProfile = profile.key;
+  state.detectionNote = `${profile.severityTitle} detected from camera distance recognition. Voice guidance and graded vibration will follow this severity.`;
+
+  const now = Date.now();
+  const severityChanged = state.alertProfile !== profile.key;
+  const cooledDown = now - state.lastAutoAlertAt > state.detectionCooldownMs;
+
+  if (severityChanged || cooledDown) {
+    state.lastAutoAlertAt = now;
+    triggerAlert(profile.key);
+    return;
+  }
+
+  render();
 }
 
 function render() {
@@ -145,8 +209,10 @@ function render() {
   }
 
   if (state.screen === "navigation") {
+    const detected = getDetectedAlert();
+
     phoneScreen.innerHTML = `
-      <section class="screen">
+      <section class="screen navigation-screen">
         <div class="row-header">
           <button class="icon-btn" id="backHome">←</button>
           <div class="nav-title">
@@ -184,6 +250,28 @@ function render() {
           }
         </div>
 
+        <div class="recognition-card ${detected ? `severity-${detected.key}` : ""}">
+          <div class="recognition-head">
+            <strong>Distance recognition</strong>
+            <span class="recognition-badge ${detected ? `severity-${detected.key}` : ""}">
+              ${detected ? detected.severityTitle : "IDLE"}
+            </span>
+          </div>
+
+          <div class="recognition-grid">
+            <div class="recognition-metric">
+              <span>Distance</span>
+              <strong>${state.detectedDistance !== null ? `${state.detectedDistance.toFixed(1)}m` : "--"}</strong>
+            </div>
+            <div class="recognition-metric">
+              <span>Danger level</span>
+              <strong>${detected ? detected.level : "--"}</strong>
+            </div>
+          </div>
+
+          <p class="recognition-note">${escapeHtml(state.detectionNote)}</p>
+        </div>
+
         <div class="toggle-area">
           <div class="toggle-row">
             <span>Voice alerts</span>
@@ -204,9 +292,12 @@ function render() {
           <button class="small-btn" id="scanBtn">${
             state.scanning ? "Stop Scanning" : "Start Scanning"
           }</button>
-          <button class="small-btn secondary" id="simulateNear">Near obstacle (0.8m)</button>
-          <button class="small-btn secondary" id="simulateMedium">Medium obstacle (1.5m)</button>
-          <button class="small-btn secondary" id="simulateFar">Far obstacle (2.5m)</button>
+
+          <div class="demo-group">
+            <button class="small-btn severity-btn near" id="detectNear">Recognize 0.8m</button>
+            <button class="small-btn severity-btn medium" id="detectMedium">Recognize 1.5m</button>
+            <button class="small-btn severity-btn far" id="detectFar">Recognize 2.5m</button>
+          </div>
         </div>
       </section>
     `;
@@ -235,14 +326,14 @@ function render() {
     });
 
     document
-      .getElementById("simulateNear")
-      .addEventListener("click", () => triggerAlert("near"));
+      .getElementById("detectNear")
+      .addEventListener("click", () => recognizeDistance(0.8));
     document
-      .getElementById("simulateMedium")
-      .addEventListener("click", () => triggerAlert("medium"));
+      .getElementById("detectMedium")
+      .addEventListener("click", () => recognizeDistance(1.5));
     document
-      .getElementById("simulateFar")
-      .addEventListener("click", () => triggerAlert("far"));
+      .getElementById("detectFar")
+      .addEventListener("click", () => recognizeDistance(2.5));
 
     attachStreamToVideo();
     return;
@@ -252,67 +343,93 @@ function render() {
     const alertData = getCurrentAlert();
 
     phoneScreen.innerHTML = `
-      <section class="screen alert-screen">
-        <div class="row-header" style="width:100%; justify-content:flex-start;">
+      <section class="screen alert-screen severity-${alertData.key}">
+        <div class="row-header alert-topbar">
           <button class="icon-btn" id="backNavigation">←</button>
+          <div class="alert-page-title">Alert</div>
+          <div class="alert-top-spacer"></div>
         </div>
 
-        <div class="alert-title">Alert</div>
-        <div class="alert-icon"></div>
+        <div class="severity-heading severity-${alertData.key}">${alertData.severityTitle} <span>(${alertData.distance})</span></div>
 
-        <div class="alert-distance-line">Obstacle ${alertData.distance} ahead</div>
-        <div class="alert-main">${alertData.title}</div>
-        <div class="alert-sub">${alertData.guidance}</div>
+        <div class="alert-hero severity-${alertData.key}">
+          <div class="alert-icon-ring outer"></div>
+          <div class="alert-icon-ring inner"></div>
+          <div class="alert-icon-circle severity-${alertData.key}">
+            <div class="alert-icon-triangle"></div>
+          </div>
 
-        <div class="alert-metrics">
-          <div class="metric-card">
-            <span>Distance</span>
-            <strong>${alertData.distance}</strong>
-          </div>
-          <div class="metric-card">
-            <span>Danger level</span>
-            <strong>${alertData.level}</strong>
-          </div>
+          <div class="alert-distance-line">Obstacle ${alertData.distance} ahead</div>
+          <div class="alert-main">${alertData.title}</div>
+          <div class="alert-sub">${alertData.guidance}</div>
         </div>
 
-        ${
-          state.lastAlert.voice === "sent" ||
-          state.lastAlert.vibration === "sent" ||
-          state.lastAlert.vibration === "visual"
-            ? `
-          <div class="feedback-pulse">
-            <span class="pulse-dot"></span>
-            Warning feedback active
+        <div class="feedback-stack">
+          <div class="feedback-card severity-${alertData.key}">
+            <div class="feedback-icon-circle severity-${alertData.key}">
+              <div class="feedback-speaker severity-${alertData.key}"></div>
+            </div>
+            <div class="feedback-copy">
+              <strong>${alertData.voiceStatus}</strong>
+              <span>${
+                state.lastAlert.voice === "issue"
+                  ? "Speech synthesis is unsupported in this browser preview."
+                  : state.lastAlert.voice === "off"
+                  ? "Voice alert is currently turned off."
+                  : alertData.voiceSummary
+              }</span>
+            </div>
+            <div class="status-badge ${
+              state.lastAlert.voice === "sent"
+                ? "sent"
+                : state.lastAlert.voice === "issue"
+                ? "issue"
+                : "off"
+            }">${
+              state.lastAlert.voice === "sent"
+                ? "Sent"
+                : state.lastAlert.voice === "issue"
+                ? "Issue"
+                : "Off"
+            }</div>
           </div>
-        `
-            : ""
-        }
 
-        <div class="alert-status">
-          ${statusRow(
-            "Voice alert",
-            state.lastAlert.voice === "sent"
-              ? "Speech prompt played or queued in the browser."
-              : state.lastAlert.voice === "issue"
-              ? "Speech synthesis is unsupported in this browser preview."
-              : "Voice alert is currently turned off.",
-            state.lastAlert.voice
-          )}
-          ${statusRow(
-            "Vibration alert",
-            state.lastAlert.vibration === "sent"
-              ? "Native vibration request was sent to the device."
-              : state.lastAlert.vibration === "visual"
-              ? "Visual buzz fallback is shown for unsupported devices."
-              : "Vibration alert is currently turned off.",
-            state.lastAlert.vibration
-          )}
+          <div class="feedback-card severity-${alertData.key}">
+            <div class="feedback-icon-circle severity-${alertData.key}">
+              <div class="feedback-watch severity-${alertData.key}"></div>
+            </div>
+            <div class="feedback-copy">
+              <strong>Vibration alert sent</strong>
+              <span>${
+                state.lastAlert.vibration === "off"
+                  ? "Vibration alert is currently turned off."
+                  : state.lastAlert.vibration === "visual"
+                  ? `${alertData.vibrationSummary}. Visual buzz fallback is shown.`
+                  : alertData.vibrationSummary
+              }</span>
+            </div>
+            <div class="status-badge ${
+              state.lastAlert.vibration === "sent"
+                ? "sent"
+                : state.lastAlert.vibration === "visual"
+                ? "visual"
+                : "off"
+            }">${
+              state.lastAlert.vibration === "sent"
+                ? "Sent"
+                : state.lastAlert.vibration === "visual"
+                ? "Visual"
+                : "Off"
+            }</div>
+          </div>
         </div>
 
         <div class="alert-actions">
-          <button class="small-btn" id="replayVoice">Replay voice prompt</button>
-          <button class="small-btn ghost" id="replayBuzz">Replay vibration / buzz</button>
-          <button class="small-btn secondary" id="returnNavigation">Back to navigation</button>
+          <button class="small-btn severity-confirm ${alertData.key}" id="ackAlert">OK, understood</button>
+          <div class="secondary-actions">
+            <button class="small-btn ghost" id="replayVoice">Replay voice</button>
+            <button class="small-btn secondary" id="replayBuzz">Replay vibration</button>
+          </div>
         </div>
       </section>
     `;
@@ -321,7 +438,7 @@ function render() {
       .getElementById("backNavigation")
       .addEventListener("click", () => setScreen("navigation"));
     document
-      .getElementById("returnNavigation")
+      .getElementById("ackAlert")
       .addEventListener("click", () => setScreen("navigation"));
 
     document.getElementById("replayVoice").addEventListener("click", () => {
@@ -397,6 +514,12 @@ function attachStreamToVideo() {
 }
 
 async function startCamera() {
+  if (state.previewMode) {
+    state.cameraStatus = "ready";
+    render();
+    return;
+  }
+
   if (state.stream) {
     state.cameraStatus = "ready";
     render();
@@ -465,10 +588,10 @@ function playVoicePrompt(shouldRender = true) {
     return "off";
   }
 
-  if (!state.voiceSupported) {
-    state.lastAlert.voice = "issue";
+  if (!state.voiceSupported || state.previewMode) {
+    state.lastAlert.voice = state.previewMode ? "sent" : "issue";
     if (shouldRender) render();
-    return "issue";
+    return state.lastAlert.voice;
   }
 
   try {
@@ -512,6 +635,12 @@ function playVibrationFeedback(shouldRender = true) {
 
   const alertData = getCurrentAlert();
 
+  if (state.previewMode) {
+    state.lastAlert.vibration = "sent";
+    if (shouldRender) render();
+    return "sent";
+  }
+
   if (navigator.vibrate) {
     const result = navigator.vibrate(alertData.vibrationPattern);
     const mode = result === false ? "visual" : "sent";
@@ -532,50 +661,73 @@ function addVisualBuzz() {
   setTimeout(() => phoneShell.classList.remove("visual-buzz"), 1000);
 }
 
-function statusRow(title, description, mode) {
-  const label =
-    mode === "sent"
-      ? "Sent"
-      : mode === "visual"
-      ? "Visual"
-      : mode === "issue"
-      ? "Browser issue"
-      : "Off";
-
-  return `
-    <div class="status-row">
-      <div>
-        <strong>${title}</strong>
-        <span>${description}</span>
-      </div>
-      <div class="status-badge ${
-        mode === "sent"
-          ? "sent"
-          : mode === "visual"
-          ? "visual"
-          : mode === "issue"
-          ? "issue"
-          : "off"
-      }">${label}</div>
-    </div>
-  `;
-}
-
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function applyPreviewFromHash() {
+  const hash = (window.location.hash || "").replace(/^#/, "");
+  state.previewMode = hash.startsWith("preview-");
+
+  if (!state.previewMode) return false;
+
+  stopCamera();
+  state.scanning = false;
+  state.voiceEnabled = true;
+  state.vibrationEnabled = true;
+  state.lastAlert.voice = "sent";
+  state.lastAlert.vibration = "sent";
+
+  if (hash === "preview-navigation") {
+    state.screen = "navigation";
+    state.cameraStatus = "ready";
+    state.detectedDistance = 1.5;
+    state.detectedProfile = "medium";
+    state.detectionNote =
+      "MEDIUM SEVERITY detected from camera distance recognition. Voice guidance and graded vibration will follow this severity.";
+    return true;
+  }
+
+  if (hash === "preview-alert-near") {
+    state.screen = "alert";
+    state.alertProfile = "near";
+    return true;
+  }
+
+  if (hash === "preview-alert-medium") {
+    state.screen = "alert";
+    state.alertProfile = "medium";
+    return true;
+  }
+
+  if (hash === "preview-alert-far") {
+    state.screen = "alert";
+    state.alertProfile = "far";
+    return true;
+  }
+
+  return false;
 }
 
 window.addEventListener("beforeunload", () => {
   stopCamera();
-  if (state.voiceSupported) {
+  if (state.voiceSupported && !state.previewMode) {
     window.speechSynthesis.cancel();
   }
 });
 
+window.addEventListener("hashchange", () => {
+  if (applyPreviewFromHash()) {
+    updateScreenLabel();
+    render();
+  }
+});
+
+applyPreviewFromHash();
 updateScreenLabel();
 render();

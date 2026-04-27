@@ -3,8 +3,193 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GuideWay Interactive Prototype</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>GuideWay Severity Preview</title>
+  <style>
+:root {
+  --bg: #f2f5f9;
+  --panel: #ffffff;
+  --border: #d7dde5;
+  --text: #20242b;
+  --muted: #68707d;
+  --accent: #2386e8;
+  --accent-soft: #eaf4ff;
+  --soft: #f4f6f8;
+  --shadow: 0 18px 40px rgba(36, 46, 66, 0.08);
+  --radius: 28px;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(180deg, #eef4fb 0%, #f7f8fb 100%);
+  color: var(--text);
+}
+body { min-height: 100vh; }
+button, input { font: inherit; }
+.page-shell { max-width: 1360px; margin: 0 auto; padding: 28px; }
+.topbar { display:flex; justify-content:space-between; gap:24px; align-items:flex-start; margin-bottom:24px; }
+.eyebrow { margin:0 0 10px; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#5c84b4; font-weight:700; }
+.eyebrow.small { margin-bottom:6px; }
+h1,h2,h3,p { margin-top:0; }
+h1 { margin-bottom:10px; font-size:42px; line-height:1; }
+.subtitle { max-width:720px; font-size:16px; line-height:1.7; color:var(--muted); margin-bottom:0; }
+.header-note { min-width:270px; max-width:320px; background:rgba(255,255,255,.82); border:1px solid var(--border); border-radius:20px; padding:16px 18px; line-height:1.6; color:var(--muted); box-shadow:var(--shadow); }
+.layout { display:grid; grid-template-columns:360px 1fr; gap:24px; align-items:start; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+.info-panel { padding:18px; display:grid; gap:16px; }
+.card { border-radius:22px; background:var(--soft); border:1px solid #e4e9ef; padding:18px; }
+.card.compact p { margin-bottom:0; line-height:1.7; color:var(--muted); }
+.clean-list { padding-left:20px; margin-bottom:0; color:var(--muted); line-height:1.9; }
+.prototype-panel { padding:22px; }
+.prototype-header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+.status-pill { border-radius:999px; background:var(--accent-soft); color:var(--accent); font-weight:700; letter-spacing:.08em; font-size:12px; padding:10px 14px; }
+.phone-shell { width:340px; max-width:100%; margin:0 auto; min-height:720px; border-radius:42px; background:linear-gradient(180deg,#b6d8ff 0%,#e8f2ff 22%,#ffffff 55%); border:1px solid #c8d4e3; box-shadow:0 30px 70px rgba(31,54,88,.16); padding:16px 16px 18px; position:relative; overflow:hidden; }
+.phone-shell.visual-buzz { animation:buzz .42s linear 2; }
+@keyframes buzz {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-5px) rotate(-.5deg)}
+  40%{transform:translateX(5px) rotate(.5deg)}
+  60%{transform:translateX(-4px) rotate(-.4deg)}
+  80%{transform:translateX(4px) rotate(.4deg)}
+}
+.phone-top { width:120px; height:26px; background:rgba(34,39,46,.94); border-radius:0 0 20px 20px; margin:-16px auto 10px; }
+.phone-screen { min-height:650px; position:relative; }
+.screen { min-height:650px; display:flex; flex-direction:column; }
+.screen h3 { font-size:26px; margin-bottom:6px; }
+.brand { text-align:center; margin-top:68px; font-size:52px; font-weight:900; letter-spacing:-.04em; font-family:Georgia, "Times New Roman", serif; }
+.button-stack { margin-top:38px; display:grid; gap:18px; }
+.action-btn,.soft-btn,.small-btn,.icon-btn { cursor:pointer; border:none; transition:transform .16s ease, opacity .16s ease, background .2s ease; }
+.action-btn:hover,.soft-btn:hover,.small-btn:hover,.icon-btn:hover { transform:translateY(-1px); }
+.action-btn { width:100%; background:#f0f0f0; border:4px solid var(--accent); color:#2e3137; border-radius:32px; padding:26px 18px; font-size:28px; line-height:1.4; box-shadow:0 12px 24px rgba(42,107,184,.12); }
+.soft-btn { width:100%; border-radius:22px; background:#e5e7eb; color:#2a2d31; padding:16px 18px; font-size:18px; font-weight:700; box-shadow:0 10px 20px rgba(23,33,53,.08); }
+.small-btn { border-radius:16px; background:var(--accent); color:white; padding:12px 14px; font-size:15px; font-weight:700; }
+.small-btn.secondary { background:#1f2937; }
+.small-btn.ghost { background:#e7eef7; color:#1f2a38; }
+.icon-btn { width:38px; height:38px; border-radius:999px; background:rgba(255,255,255,.72); color:#1f2937; font-size:18px; }
+.home-caption { margin-top:auto; padding:0 18px 18px; color:#4e5662; line-height:1.6; font-size:17px; }
+.row-header { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.nav-title p,.muted { color:var(--muted); }
+.device-list { margin-top:20px; display:grid; }
+.device-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 4px; border-bottom:1px solid #cfd7e1; }
+.device-left { display:flex; align-items:center; gap:12px; font-size:18px; font-weight:700; }
+.device-icon { width:44px; text-align:center; font-size:28px; }
+.tag { border-radius:999px; padding:8px 12px; font-size:12px; font-weight:800; letter-spacing:.04em; }
+.tag.on { background:#e7f8ef; color:#177a46; }
+.tag.off { background:#ebeff4; color:#6a7280; }
+.camera-wrap { margin-top:18px; border-radius:28px; border:1px solid #c8d2df; background:radial-gradient(circle at top,#ffffff 0%,#edf4fb 100%); padding:12px; box-shadow:inset 0 1px 0 rgba(255,255,255,.7); }
+.camera-stage { position:relative; height:336px; border-radius:20px; overflow:hidden; background:#05070a; border:1px solid #b5c2d3; }
+.camera-stage::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(28,126,241,.08),rgba(0,0,0,.15)); pointer-events:none; }
+.scanner-frame { position:absolute; inset:18px; border:2px solid #2b8ef2; border-radius:18px; pointer-events:none; }
+.corner { position:absolute; width:26px; height:26px; border-color:#2b8ef2; border-style:solid; pointer-events:none; }
+.corner.tl { top:-2px; left:-2px; border-width:4px 0 0 4px; }
+.corner.tr { top:-2px; right:-2px; border-width:4px 4px 0 0; }
+.corner.bl { bottom:-2px; left:-2px; border-width:0 0 4px 4px; }
+.corner.br { bottom:-2px; right:-2px; border-width:0 4px 4px 0; }
+.scan-line { position:absolute; left:0; right:0; height:3px; background:rgba(43,142,242,.95); box-shadow:0 0 16px rgba(43,142,242,.9); animation:scan 1.8s linear infinite; }
+@keyframes scan {
+  0%{top:18px; opacity:.65}
+  50%{opacity:1}
+  100%{top:calc(100% - 18px); opacity:.7}
+}
+.camera-meta,.toggle-area { margin-top:12px; }
+.camera-meta { font-size:13px; line-height:1.6; color:var(--muted); }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; font-size:18px; }
+.toggle { width:60px; height:32px; border-radius:999px; background:#bcc4cf; position:relative; border:none; cursor:pointer; }
+.toggle::after { content:""; position:absolute; width:24px; height:24px; top:4px; left:4px; border-radius:999px; background:white; transition:left .2s ease; box-shadow:0 4px 10px rgba(21,28,38,.15); }
+.toggle.active { background:#70757d; }
+.toggle.active::after { left:32px; }
+.control-grid { margin-top:auto; display:grid; gap:10px; padding-top:10px; }
+.alert-screen { text-align:center; align-items:center; }
+.hidden { display:none !important; }
+.recognition-card { margin-top:12px; border-radius:20px; background:#f5f7fa; border:1px solid #e0e6ee; padding:14px; }
+.recognition-head { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.recognition-head strong { font-size:15px; }
+.recognition-badge { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:7px 10px; font-size:11px; font-weight:900; letter-spacing:.06em; background:#eef1f5; color:#667085; }
+.recognition-badge.severity-near,.severity-heading.severity-near { background:#feeaea; color:#d92d20; }
+.recognition-badge.severity-medium,.severity-heading.severity-medium { background:#fff2dd; color:#f79009; }
+.recognition-badge.severity-far,.severity-heading.severity-far { background:#ecfdf3; color:#2e9b47; }
+.recognition-card.severity-near { background:#fff3f2; border-color:#f6c7c3; }
+.recognition-card.severity-medium { background:#fffaef; border-color:#f2d487; }
+.recognition-card.severity-far { background:#f5fbf4; border-color:#c8e6be; }
+.recognition-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.recognition-metric { background:rgba(255,255,255,.82); border:1px solid #e3e8ef; border-radius:16px; padding:12px; }
+.recognition-metric span { display:block; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#7b8491; margin-bottom:6px; }
+.recognition-metric strong { display:block; font-size:20px; font-weight:900; }
+.recognition-note { margin:12px 0 0; font-size:13px; line-height:1.6; color:var(--muted); }
+.demo-group { display:grid; gap:10px; }
+.severity-btn.near { background:#ef4444; }
+.severity-btn.medium { background:#f59e0b; }
+.severity-btn.far { background:#67b44a; }
+.severity-heading { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:8px 14px; margin-top:8px; font-size:12px; font-weight:900; letter-spacing:.08em; }
+.severity-heading span { font-weight:700; opacity:.82; }
+.alert-topbar { width:100%; justify-content:space-between; align-items:center; margin-top:2px; }
+.alert-page-title { font-size:24px; font-weight:800; letter-spacing:-.03em; }
+.alert-top-spacer { width:38px; height:38px; }
+.alert-hero { position:relative; width:100%; border-radius:24px; border:1px solid #e0e6ee; padding:20px 18px 18px; margin-top:16px; overflow:hidden; }
+.alert-hero.severity-near { background:#fff2f1; border-color:#f0a9a2; }
+.alert-hero.severity-medium { background:#fff9ee; border-color:#f4c75f; }
+.alert-hero.severity-far { background:#f4fbf2; border-color:#b8dca8; }
+.alert-icon-ring { position:absolute; left:50%; top:28px; transform:translateX(-50%); border-radius:999px; pointer-events:none; }
+.alert-icon-ring.outer { width:150px; height:150px; border:2px solid rgba(255,255,255,.55); }
+.alert-icon-ring.inner { width:126px; height:126px; top:40px; border:2px solid rgba(255,255,255,.45); }
+.alert-icon-circle { width:120px; height:120px; border-radius:999px; display:flex; align-items:center; justify-content:center; margin:20px auto 16px; position:relative; box-shadow:inset 0 0 0 10px rgba(255,255,255,.24); }
+.alert-icon-circle.severity-near { background:#ef4444; }
+.alert-icon-circle.severity-medium { background:#f5bd1f; }
+.alert-icon-circle.severity-far { background:#7dbd55; }
+.alert-icon-triangle { position:relative; width:0; height:0; border-left:34px solid transparent; border-right:34px solid transparent; border-bottom:58px solid #ffffff; filter:drop-shadow(0 4px 8px rgba(0,0,0,.06)); }
+.alert-icon-triangle::after { content:"!"; position:absolute; left:50%; top:26px; transform:translateX(-50%); font-size:34px; font-weight:900; color:#ef4444; }
+.alert-screen.severity-medium .alert-icon-triangle::after { color:#f5bd1f; }
+.alert-screen.severity-far .alert-icon-triangle::after { color:#67b44a; }
+.alert-distance-line { margin-top:6px; font-size:18px; font-weight:800; color:#1b72d0; text-align:center; }
+.alert-screen.severity-near .alert-distance-line,.alert-screen.severity-near .alert-main { color:#d92d20; }
+.alert-screen.severity-medium .alert-distance-line,.alert-screen.severity-medium .alert-main { color:#f79009; }
+.alert-screen.severity-far .alert-distance-line,.alert-screen.severity-far .alert-main { color:#2e9b47; }
+.alert-main { font-size:20px; line-height:1.15; margin-top:8px; }
+.alert-sub { font-size:15px; line-height:1.5; max-width:250px; margin:8px auto 0; color:#4b5563; }
+.feedback-stack { width:100%; display:grid; gap:12px; margin-top:14px; }
+.feedback-card { display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:12px; width:100%; border-radius:20px; padding:14px 14px; border:1px solid #e0e6ee; text-align:left; }
+.feedback-card.severity-near { background:#fff3f3; border-color:#f3c0bb; }
+.feedback-card.severity-medium { background:#fff8eb; border-color:#f2d088; }
+.feedback-card.severity-far { background:#f6fbf4; border-color:#c8e3bc; }
+.feedback-copy strong { display:block; font-size:14px; margin-bottom:4px; }
+.feedback-copy span { display:block; font-size:12px; line-height:1.5; color:#4b5563; }
+.feedback-icon-circle { width:40px; height:40px; border-radius:999px; position:relative; background:rgba(255,255,255,.94); box-shadow:inset 0 0 0 1px rgba(255,255,255,.6); }
+.feedback-speaker { position:absolute; left:10px; top:12px; width:10px; height:16px; background:currentColor; border-radius:2px 0 0 2px; }
+.feedback-speaker::before { content:""; position:absolute; left:8px; top:-2px; width:0; height:0; border-top:10px solid transparent; border-bottom:10px solid transparent; border-left:10px solid currentColor; }
+.feedback-speaker::after { content:""; position:absolute; left:18px; top:-2px; width:12px; height:20px; border-right:3px solid currentColor; border-top:3px solid transparent; border-bottom:3px solid transparent; border-radius:50%; box-sizing:border-box; }
+.feedback-watch { position:absolute; left:11px; top:8px; width:18px; height:22px; border:3px solid currentColor; border-radius:8px; }
+.feedback-watch::before,.feedback-watch::after { content:""; position:absolute; left:50%; transform:translateX(-50%); width:10px; height:6px; background:currentColor; border-radius:4px; }
+.feedback-watch::before { top:-8px; }
+.feedback-watch::after { bottom:-8px; }
+.feedback-icon-circle.severity-near,.feedback-speaker.severity-near,.feedback-watch.severity-near { color:#ef4444; }
+.feedback-icon-circle.severity-medium,.feedback-speaker.severity-medium,.feedback-watch.severity-medium { color:#f5b61f; }
+.feedback-icon-circle.severity-far,.feedback-speaker.severity-far,.feedback-watch.severity-far { color:#4fa83d; }
+.alert-actions { width:100%; margin-top:auto; padding-top:14px; }
+.secondary-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.severity-confirm { font-size:16px; padding:14px 16px; }
+.severity-confirm.near { background:#ef4444; }
+.severity-confirm.medium { background:#f5bd1f; color:#1f2937; }
+.severity-confirm.far { background:#67b44a; }
+#ackAlert { margin-bottom:10px; }
+.status-badge { border-radius:999px; padding:8px 10px; font-size:12px; font-weight:800; min-width:70px; text-align:center; }
+.status-badge.sent { background:#e8f8ee; color:#147342; }
+.navigation-screen .control-grid { margin-top:12px; }
+@media (max-width:1080px) {
+  .layout { grid-template-columns:1fr; }
+  .topbar { flex-direction:column; }
+  .header-note { max-width:none; }
+}
+@media (max-width:640px) {
+  .page-shell { padding:16px; }
+  h1 { font-size:34px; }
+  .phone-shell { min-height:700px; }
+  .brand { font-size:46px; }
+  .feedback-card { grid-template-columns:40px 1fr; }
+  .feedback-card .status-badge { grid-column:2; justify-self:start; margin-top:4px; }
+  .secondary-actions { grid-template-columns:1fr; }
+}
+  </style>
 </head>
 <body>
   <div class="page-shell">
@@ -12,49 +197,29 @@
       <div>
         <p class="eyebrow">DECO / Interactive Prototype</p>
         <h1>GuideWay</h1>
-        <p class="subtitle">
-          A clickable web prototype for visually impaired pedestrian navigation with camera preview,
-          obstacle alerts, voice guidance, and vibration feedback simulation.
-        </p>
+        <p class="subtitle">Severity-based preview with camera-distance recognition, graded voice prompts, and graded vibration.</p>
       </div>
       <div class="header-note">
-        <strong>Best testing setup:</strong><br />
-        Open on a phone browser with camera permission enabled. HTTPS is recommended for live camera access.
+        <strong>Preview tips:</strong><br />
+        Use the demo buttons in Navigation to simulate 0.8m, 1.5m, and 2.5m obstacle detection.
       </div>
     </header>
 
     <main class="layout">
       <section class="panel info-panel">
         <div class="card">
-          <h2>Prototype Features</h2>
+          <h2>What changed</h2>
           <ul class="clean-list">
-            <li>Clickable page transitions</li>
-            <li>Device connection screen</li>
-            <li>Phone rear camera preview on Navigation page</li>
-            <li>Scanning animation overlay</li>
-            <li>Obstacle alert screen</li>
-            <li>Voice prompt using browser speech synthesis</li>
-            <li>Vibration API or visual buzz fallback</li>
+            <li>Distance recognition card on Navigation</li>
+            <li>High / Medium / Low severity mapping</li>
+            <li>Voice prompts matched to distance</li>
+            <li>Graded vibration strength</li>
+            <li>Color-coded alert screen</li>
           </ul>
         </div>
-
-        <div class="card">
-          <h2>Interaction Flow</h2>
-          <ol class="step-list">
-            <li>Starting Situation</li>
-            <li>System Activation</li>
-            <li>Environment Detection</li>
-            <li>Feedback Triggered</li>
-            <li>User Reaction</li>
-            <li>Safe Continuation</li>
-          </ol>
-        </div>
-
         <div class="card compact">
-          <h2>Testing Notes</h2>
-          <p>
-            On some laptops or sandbox previews, camera and vibration support may be limited. The prototype includes visual fallback effects so the warning state is still visible during demos.
-          </p>
+          <h2>Quick preview routes</h2>
+          <p>Open with <strong>#preview-navigation</strong>, <strong>#preview-alert-near</strong>, <strong>#preview-alert-medium</strong>, or <strong>#preview-alert-far</strong> to see fixed preview states.</p>
         </div>
       </section>
 
@@ -73,41 +238,338 @@
         </div>
       </section>
     </main>
-
-    <section class="references-grid">
-      <article class="panel reference-panel">
-        <div class="reference-header">
-          <div>
-            <p class="eyebrow small">Storyboard</p>
-            <h2>6-Panel User Journey</h2>
-          </div>
-        </div>
-        <img class="reference-image" src="storyboard.jpg" alt="GuideWay storyboard" />
-        <div class="storyboard-grid">
-          <div class="story-card"><span>01</span><strong>Starting Situation</strong><p>User walks on campus and is unaware of obstacles.</p></div>
-          <div class="story-card"><span>02</span><strong>System Activation</strong><p>User taps Start Navigation in the app.</p></div>
-          <div class="story-card"><span>03</span><strong>Environment Detection</strong><p>The system scans and identifies an obstacle.</p></div>
-          <div class="story-card"><span>04</span><strong>Feedback Triggered</strong><p>Voice and vibration warn the user to turn left.</p></div>
-          <div class="story-card"><span>05</span><strong>User Reaction</strong><p>The user turns left to avoid the obstacle.</p></div>
-          <div class="story-card"><span>06</span><strong>Safe Continuation</strong><p>The user continues safely along the path.</p></div>
-        </div>
-      </article>
-
-      <article class="panel reference-panel">
-        <div class="reference-header">
-          <div>
-            <p class="eyebrow small">Figma reference</p>
-            <h2>Core Page Direction</h2>
-          </div>
-        </div>
-        <img class="reference-image" src="figma-reference.png" alt="GuideWay Figma reference screens" />
-        <div class="figma-note">
-          This final HTML/CSS/JS prototype follows the same four-page logic: <strong>Home</strong>, <strong>Connect Devices</strong>, <strong>Navigation</strong>, and <strong>Alert</strong>.
-        </div>
-      </article>
-    </section>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+const ALERT_PROFILES = {
+  near: {
+    key: "near",
+    distance: "0.8m",
+    distanceValue: 0.8,
+    level: "High",
+    severityTitle: "HIGH SEVERITY",
+    title: "STOP immediately",
+    guidance: "Obstacle very close. Stop and prepare to change direction.",
+    spoken: "Stop. Obstacle 0.8 meters ahead. Immediate obstacle. Stop.",
+    voiceSummary: '"Stop. Obstacle very close."',
+    vibrationSummary: "Strong vibration",
+    voiceStatus: "Voice alert sent",
+    vibrationPattern: [380, 120, 380, 120, 520]
+  },
+  medium: {
+    key: "medium",
+    distance: "1.5m",
+    distanceValue: 1.5,
+    level: "Medium",
+    severityTitle: "MEDIUM SEVERITY",
+    title: "Slow down",
+    guidance: "Obstacle ahead. Reduce speed and stay alert.",
+    spoken: "Slow down. Obstacle 1.5 meters ahead.",
+    voiceSummary: '"Slow down. Obstacle ahead."',
+    vibrationSummary: "Medium vibration",
+    voiceStatus: "Voice alert sent",
+    vibrationPattern: [220, 120, 220, 120, 280]
+  },
+  far: {
+    key: "far",
+    distance: "2.5m",
+    distanceValue: 2.5,
+    level: "Low",
+    severityTitle: "LOW SEVERITY",
+    title: "Adjust direction",
+    guidance: "Obstacle ahead. Turn slightly left.",
+    spoken: "Adjust direction. Obstacle 2.5 meters ahead.",
+    voiceSummary: '"Adjust direction. Path clear."',
+    vibrationSummary: "Light vibration",
+    voiceStatus: "Voice alert sent",
+    vibrationPattern: [120, 120, 120]
+  }
+};
+
+const state = {
+  screen: "home",
+  devices: { camera: true, earphones: true, smartwatch: true, others: false },
+  voiceEnabled: true,
+  vibrationEnabled: true,
+  voiceSupported: typeof window !== "undefined" && "speechSynthesis" in window,
+  vibrationSupported: typeof navigator !== "undefined" && "vibrate" in navigator,
+  scanning: false,
+  alertProfile: "medium",
+  detectedDistance: null,
+  detectedProfile: null,
+  detectionNote: "Use the demo buttons below to simulate camera-based distance recognition.",
+  lastAlert: { voice: "off", vibration: "off" }
+};
+
+const phoneScreen = document.getElementById("phoneScreen");
+const phoneShell = document.getElementById("phoneShell");
+const screenLabel = document.getElementById("screenLabel");
+
+function updateScreenLabel() {
+  screenLabel.textContent = state.screen.toUpperCase();
+}
+
+function setScreen(next) {
+  const previous = state.screen;
+  state.screen = next;
+  if (previous === "navigation" && next !== "navigation") {
+    state.scanning = false;
+  }
+  updateScreenLabel();
+  render();
+}
+
+function getDeviceCount() {
+  return Object.values(state.devices).filter(Boolean).length;
+}
+
+function getCurrentAlert() {
+  return ALERT_PROFILES[state.alertProfile] || ALERT_PROFILES.medium;
+}
+
+function getDetectedAlert() {
+  return state.detectedProfile ? ALERT_PROFILES[state.detectedProfile] : null;
+}
+
+function mapDistanceToProfile(distanceMeters) {
+  if (distanceMeters <= 1.0) return ALERT_PROFILES.near;
+  if (distanceMeters <= 2.0) return ALERT_PROFILES.medium;
+  if (distanceMeters <= 3.0) return ALERT_PROFILES.far;
+  return null;
+}
+
+function addVisualBuzz() {
+  phoneShell.classList.remove("visual-buzz");
+  void phoneShell.offsetWidth;
+  phoneShell.classList.add("visual-buzz");
+  setTimeout(() => phoneShell.classList.remove("visual-buzz"), 1000);
+}
+
+function getStatusLabel(mode) {
+  if (mode === "sent") return "Sent";
+  if (mode === "visual") return "Visual";
+  if (mode === "issue") return "Issue";
+  return "Off";
+}
+
+function getStatusClass(mode) {
+  return mode === "sent" ? "sent" : "off";
+}
+
+function playVoicePrompt(shouldRender = true) {
+  if (!state.voiceEnabled) {
+    state.lastAlert.voice = "off";
+    if (shouldRender) render();
+    return "off";
+  }
+
+  if (!state.voiceSupported) {
+    state.lastAlert.voice = "issue";
+    if (shouldRender) render();
+    return "issue";
+  }
+
+  try {
+    const alertData = getCurrentAlert();
+    const utterance = new SpeechSynthesisUtterance(alertData.spoken);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    state.lastAlert.voice = "sent";
+    if (shouldRender) render();
+    return "sent";
+  } catch (error) {
+    state.lastAlert.voice = "issue";
+    if (shouldRender) render();
+    return "issue";
+  }
+}
+
+function playVibrationFeedback(shouldRender = true) {
+  if (!state.vibrationEnabled) {
+    state.lastAlert.vibration = "off";
+    if (shouldRender) render();
+    return "off";
+  }
+
+  const alertData = getCurrentAlert();
+  addVisualBuzz();
+
+  if (state.vibrationSupported) {
+    try {
+      const result = navigator.vibrate(alertData.vibrationPattern);
+      state.lastAlert.vibration = result === false ? "visual" : "sent";
+    } catch (error) {
+      state.lastAlert.vibration = "visual";
+    }
+  } else {
+    state.lastAlert.vibration = "visual";
+  }
+
+  if (shouldRender) render();
+  return state.lastAlert.vibration;
+}
+
+
+
+function triggerAlert(profileKey = "medium") {
+  const profile = ALERT_PROFILES[profileKey] || ALERT_PROFILES.medium;
+  state.alertProfile = profile.key;
+  state.lastAlert.voice = state.voiceEnabled ? "sent" : "off";
+  state.lastAlert.vibration = state.vibrationEnabled ? "sent" : "off";
+  if (state.vibrationEnabled) {
+    addVisualBuzz();
+  }
+  setScreen("alert");
+}
+
+function recognizeDistance(distanceMeters) {
+  const profile = mapDistanceToProfile(distanceMeters);
+  state.detectedDistance = distanceMeters;
+
+  if (!profile) {
+    state.detectedProfile = null;
+    state.detectionNote = `Detected distance: ${distanceMeters.toFixed(1)}m. No warning threshold reached.`;
+    render();
+    return;
+  }
+
+  state.detectedProfile = profile.key;
+  state.detectionNote = `${profile.severityTitle} detected from camera distance recognition. Voice guidance and graded vibration will follow this severity.`;
+  triggerAlert(profile.key);
+}
+
+function deviceRow(key, icon, label) {
+  return `<div class="device-row"><div class="device-left"><div class="device-icon">${icon}</div><div>${label}</div></div><button class="tag ${state.devices[key] ? "on" : "off"}" data-device="${key}">${state.devices[key] ? "Connected" : "Off"}</button></div>`;
+}
+
+function bindDeviceToggles() {
+  document.querySelectorAll("[data-device]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.getAttribute("data-device");
+      state.devices[key] = !state.devices[key];
+      render();
+    });
+  });
+}
+
+function renderHome() {
+  phoneScreen.innerHTML = `<section class="screen"><div class="brand">GuideWay</div><div class="button-stack"><button class="action-btn" id="goNavigation">Start<br/>Navigation</button><button class="action-btn" id="goDevices" style="border-color:#d7dde5;">Connect<br/>Devices</button></div><p class="home-caption">Safe navigation support for visually impaired users.</p></section>`;
+  document.getElementById("goNavigation").addEventListener("click", () => setScreen("navigation"));
+  document.getElementById("goDevices").addEventListener("click", () => setScreen("devices"));
+}
+
+function renderDevices() {
+  phoneScreen.innerHTML = `<section class="screen"><div class="row-header"><button class="icon-btn" id="backHome">←</button><div class="nav-title"><h3>Connect Devices</h3></div></div><div class="device-list">${deviceRow("camera", "📷", "Camera")}${deviceRow("earphones", "🎧", "Earphones")}${deviceRow("smartwatch", "⌚", "Smartwatch")}${deviceRow("others", "📱", "Others")}</div><div class="camera-meta">Connected devices: <strong>${getDeviceCount()}</strong></div><div class="control-grid"><button class="soft-btn" id="continueNav">Continue</button></div></section>`;
+  document.getElementById("backHome").addEventListener("click", () => setScreen("home"));
+  document.getElementById("continueNav").addEventListener("click", () => setScreen("navigation"));
+  bindDeviceToggles();
+}
+
+function renderNavigation() {
+  const detected = getDetectedAlert();
+  phoneScreen.innerHTML = `<section class="screen navigation-screen"><div class="row-header"><button class="icon-btn" id="backHome">←</button><div class="nav-title"><h3>Navigation</h3><p>${state.scanning ? "Scanning surroundings..." : "Ready to scan surroundings"}</p></div></div><div class="camera-wrap"><div class="camera-stage"><div style="position:absolute;inset:0;background:linear-gradient(180deg,#bccbdb 0%,#9fb2c5 20%,#5c6b5d 20%,#445140 40%,#9f917a 40%,#8e7f69 100%);"></div><div class="scanner-frame"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>${state.scanning ? '<div class="scan-line"></div>' : ''}</div></div><div class="camera-meta">Camera status: <strong>ready</strong><br/>Preview mode shows the live-state layout without requesting camera permission.</div><div class="recognition-card ${detected ? `severity-${detected.key}` : ""}"><div class="recognition-head"><strong>Distance recognition</strong><span class="recognition-badge ${detected ? `severity-${detected.key}` : ""}">${detected ? detected.severityTitle : "IDLE"}</span></div><div class="recognition-grid"><div class="recognition-metric"><span>Distance</span><strong>${state.detectedDistance !== null ? `${state.detectedDistance.toFixed(1)}m` : "--"}</strong></div><div class="recognition-metric"><span>Danger level</span><strong>${detected ? detected.level : "--"}</strong></div></div><p class="recognition-note">${state.detectionNote}</p></div><div class="toggle-area"><div class="toggle-row"><span>Voice alerts</span><button class="toggle ${state.voiceEnabled ? "active" : ""}" id="toggleVoice"></button></div><div class="toggle-row"><span>Vibration alerts</span><button class="toggle ${state.vibrationEnabled ? "active" : ""}" id="toggleVibration"></button></div></div><div class="control-grid"><button class="soft-btn" id="scanBtn">${state.scanning ? "Stop Scanning" : "Start Scanning"}</button><div class="demo-group"><button class="small-btn severity-btn near" id="detectNear">Recognize 0.8m</button><button class="small-btn severity-btn medium" id="detectMedium">Recognize 1.5m</button><button class="small-btn severity-btn far" id="detectFar">Recognize 2.5m</button></div></div></section>`;
+
+  document.getElementById("backHome").addEventListener("click", () => setScreen("home"));
+  document.getElementById("toggleVoice").addEventListener("click", () => {
+    state.voiceEnabled = !state.voiceEnabled;
+    render();
+  });
+  document.getElementById("toggleVibration").addEventListener("click", () => {
+    state.vibrationEnabled = !state.vibrationEnabled;
+    render();
+  });
+  document.getElementById("scanBtn").addEventListener("click", () => {
+    state.scanning = !state.scanning;
+    render();
+  });
+  document.getElementById("detectNear").addEventListener("click", () => recognizeDistance(0.8));
+  document.getElementById("detectMedium").addEventListener("click", () => recognizeDistance(1.5));
+  document.getElementById("detectFar").addEventListener("click", () => recognizeDistance(2.5));
+}
+
+function renderAlert() {
+  const alertData = getCurrentAlert();
+  const voiceDetail = state.lastAlert.voice === "sent"
+    ? alertData.voiceSummary
+    : state.lastAlert.voice === "issue"
+    ? "Browser speech playback is unavailable in this preview."
+    : "Voice alert is turned off.";
+  const vibrationDetail = state.lastAlert.vibration === "sent"
+    ? alertData.vibrationSummary
+    : state.lastAlert.vibration === "visual"
+    ? "Visual buzz fallback is active in this browser."
+    : "Vibration alert is turned off.";
+
+  phoneScreen.innerHTML = `<section class="screen alert-screen severity-${alertData.key}"><div class="row-header alert-topbar"><button class="icon-btn" id="backNavigation">←</button><div class="alert-page-title">Alert</div><div class="alert-top-spacer"></div></div><div class="severity-heading severity-${alertData.key}">${alertData.severityTitle} <span>(${alertData.distance})</span></div><div class="alert-hero severity-${alertData.key}"><div class="alert-icon-ring outer"></div><div class="alert-icon-ring inner"></div><div class="alert-icon-circle severity-${alertData.key}"><div class="alert-icon-triangle"></div></div><div class="alert-distance-line">Obstacle ${alertData.distance} ahead</div><div class="alert-main">${alertData.title}</div><div class="alert-sub">${alertData.guidance}</div></div><div class="feedback-stack"><div class="feedback-card severity-${alertData.key}"><div class="feedback-icon-circle severity-${alertData.key}"><div class="feedback-speaker severity-${alertData.key}"></div></div><div class="feedback-copy"><strong>${alertData.voiceStatus}</strong><span>${voiceDetail}</span></div><div class="status-badge ${getStatusClass(state.lastAlert.voice)}">${getStatusLabel(state.lastAlert.voice)}</div></div><div class="feedback-card severity-${alertData.key}"><div class="feedback-icon-circle severity-${alertData.key}"><div class="feedback-watch severity-${alertData.key}"></div></div><div class="feedback-copy"><strong>Vibration alert sent</strong><span>${vibrationDetail}</span></div><div class="status-badge ${getStatusClass(state.lastAlert.vibration)}">${getStatusLabel(state.lastAlert.vibration)}</div></div></div><div class="alert-actions"><button class="small-btn severity-confirm ${alertData.key}" id="ackAlert">OK, understood</button><div class="secondary-actions"><button class="small-btn ghost" id="replayVoice">Replay voice</button><button class="small-btn secondary" id="replayBuzz">Replay vibration</button></div></div></section>`;
+
+  document.getElementById("backNavigation").addEventListener("click", () => setScreen("navigation"));
+  document.getElementById("ackAlert").addEventListener("click", () => setScreen("navigation"));
+  document.getElementById("replayVoice").addEventListener("click", () => {
+    playVoicePrompt();
+  });
+  document.getElementById("replayBuzz").addEventListener("click", () => {
+    playVibrationFeedback();
+  });
+}
+
+function render() {
+  updateScreenLabel();
+  if (state.screen === "home") return renderHome();
+  if (state.screen === "devices") return renderDevices();
+  if (state.screen === "navigation") return renderNavigation();
+  if (state.screen === "alert") return renderAlert();
+}
+
+function applyPreviewFromHash() {
+  const hash = (window.location.hash || "").replace(/^#/, "");
+  if (hash === "preview-navigation") {
+    state.screen = "navigation";
+    state.detectedDistance = 1.5;
+    state.detectedProfile = "medium";
+    state.detectionNote = "MEDIUM SEVERITY detected from camera distance recognition. Voice guidance and graded vibration will follow this severity.";
+    return;
+  }
+  if (hash === "preview-alert-near") {
+    state.screen = "alert";
+    state.alertProfile = "near";
+    return;
+  }
+  if (hash === "preview-alert-medium") {
+    state.screen = "alert";
+    state.alertProfile = "medium";
+    return;
+  }
+  if (hash === "preview-alert-far") {
+    state.screen = "alert";
+    state.alertProfile = "far";
+    return;
+  }
+}
+
+function runSmokeTests() {
+  console.assert(mapDistanceToProfile(0.8).key === "near", "0.8m should map to near");
+  console.assert(mapDistanceToProfile(1.5).key === "medium", "1.5m should map to medium");
+  console.assert(mapDistanceToProfile(2.5).key === "far", "2.5m should map to far");
+  console.assert(typeof triggerAlert === "function", "triggerAlert should exist");
+  console.assert(typeof playVoicePrompt === "function", "playVoicePrompt should exist");
+  console.assert(typeof playVibrationFeedback === "function", "playVibrationFeedback should exist");
+  triggerAlert("near");
+  console.assert(state.screen === "alert", "triggerAlert should switch to alert screen");
+  console.assert(state.alertProfile === "near", "triggerAlert should store the selected alert profile");
+  setScreen("home");
+}
+
+window.addEventListener("hashchange", () => {
+  applyPreviewFromHash();
+  render();
+});
+
+applyPreviewFromHash();
+runSmokeTests();
+updateScreenLabel();
+render();
+  </script>
 </body>
 </html>
